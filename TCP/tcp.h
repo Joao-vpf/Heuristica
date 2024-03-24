@@ -125,7 +125,7 @@ class tcp{
 				states.push_back(e);
 			}
 			dead(states);//Mata alguns genes
-			if(rep%100 == 0)
+			if(rep%tx_gemeos == 0)
 			gemeos(states);//Tira genes repetidos dos melhores locais
 			embaralha(states);//Shuffle
 			if(rep%1000==0)
