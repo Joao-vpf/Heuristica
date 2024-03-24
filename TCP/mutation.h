@@ -4,7 +4,7 @@
 
 
 ill peso(vector<pair<int, ill>>* adj,ill x, ill y)
-{
+{//acha o peso
     for(auto e : adj[x])
     {
         if(e.first == y)
@@ -17,9 +17,8 @@ ill peso(vector<pair<int, ill>>* adj,ill x, ill y)
 
 
 gene* cross(gene* a, gene* b,vector<pair<int, ill>>* adj, int m)
-{
+{//Faz a mutação
     int n =  a->path.size();
-    srand(time(0));
     gene* nv = new gene;
     ill ini;
     if(rand()%2 == 0)
@@ -96,8 +95,8 @@ bool ordena(gene* a, gene* b)
 
 void dead(vector<gene*>& states)
 {//mata alguns casos
-    if(states.size()<6000)return;  // População maxima
-    srand(time(0));
+    if(states.size()<3000)return;  // População maxima
+    
     sort(states.begin(), states.end(), ordenareverso);
     int sz = states.size();
     int n = (rand()%(sz/2) + sz/3 + sqrt(sz));
@@ -108,7 +107,7 @@ void dead(vector<gene*>& states)
         delete a;
     }
     
-    if(states.size() > 8000) n = states.size()-8000;
+    if(states.size() > 4000) n = states.size()-4000;
     else return;
     
     while(n--)
@@ -120,41 +119,28 @@ void dead(vector<gene*>& states)
 }
 
 void gemeos(vector<gene*>& states)
-{//mata alguns casos repetidos
+{//Mata repetidos
     int sz = states.size();
     sort(states.begin(), states.end(), ordena);
-    set<int> foi;
-    priority_queue<int> q;
+    map<int, int, greater<int>> foi;
     for(int i=sz-1; i>(sz*2)/3; i--)
     {
         for(int j=i-1; j>(sz*2)/3; j--)
         {
             if(states[i]->path == states[j]->path)
             {
-                if(states[i]->happy > states[j]->happy) 
+                int idx = (states[i]->happy > states[j]->happy) ? i : j;
+                if(!foi.count(idx))
                 {
-                    if(!foi.count(i))
-                    {
-                        foi.insert(i);
-                        q.push(i);
-                    }
-                }
-                else 
-                {
-                    if(!foi.count(j))
-                    {
-                        foi.insert(j);
-                        q.push(j);
-                    }
+                    foi[idx] = 1;
                 }
             }
         }
     }
 
-    while(q.size())
+    for(auto it = foi.begin(); it != foi.end(); ++it)
     {
-        int u = q.top();
-        q.pop();
+        int u = it->first;
         delete states[u];
         states.erase(states.begin()+u);
     }
@@ -162,7 +148,7 @@ void gemeos(vector<gene*>& states)
 
 void embaralha(vector<gene*>& states)
 {
-    srand(time(0));
+
     for (int i = states.size()-1; i>0;  i--) 
     {
         int j = rand() % (i + 1);

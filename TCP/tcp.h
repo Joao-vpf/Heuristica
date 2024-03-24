@@ -103,7 +103,7 @@ class tcp{
 			srand(time(0));
 			vector<gene*> baby;
 			for(int i=0; i<m; i++)
-			{
+			{//Cria os novos genes
 				int r = -1;
 				do
 				{
@@ -113,7 +113,7 @@ class tcp{
 				baby.push_back(cross(states[i], states[r], adj, n));
 			}
 			for(auto e : baby)
-			{
+			{//Faz os calculos para os novos genes
 				calc_happy(e, max, states.size(), n);
 				if(e->happy != inf)
 				{
@@ -124,10 +124,10 @@ class tcp{
 				}
 				states.push_back(e);
 			}
-			dead(states);
-			if(rep%50==0)
-				gemeos(states);
-			embaralha(states);
+			dead(states);//Mata alguns genes
+			if(rep%100 == 0)
+			gemeos(states);//Tira genes repetidos dos melhores locais
+			embaralha(states);//Shuffle
 			if(rep%1000==0)
 			cout << rep <<" " << states.size() << " " << max <<endl;
 		}
