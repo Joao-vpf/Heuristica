@@ -1,7 +1,7 @@
 #pragma once
 #include <bits/stdc++.h>
 
-#define input "C:/Users/PC/Documents/Codigos/Varias coisas/TCP/input.txt"
+#define input ""
 
 typedef int_fast64_t ill;
 
