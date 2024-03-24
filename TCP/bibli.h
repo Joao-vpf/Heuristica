@@ -1,11 +1,12 @@
 #pragma once
 #include <bits/stdc++.h>
 
-#define input "COLOCAR AQUI"
+#define input "C:/Users/PC/Documents/Codigos/Varias coisas/TCP/input.txt"
 
 typedef int_fast64_t ill;
 
-ill inf= 10e16;
+ill inf= 10e16; //Limite do inf
+int anos = 20000; //Quantidade de anos
 
 
 using namespace std;

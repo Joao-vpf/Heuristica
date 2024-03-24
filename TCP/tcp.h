@@ -6,17 +6,30 @@
 class tcp{
 	ill max;
 	int n;
-	vector<pair<int, ill>>* adj;
+	ill** adj;
 	vector<gene*> states;
 	
 	void fill()
 	{//preenche com o caso de teste
-		adj = new vector<pair<int, ill>>[n+1];
+		adj = new ill* [n+1];
+		for(int i=0; i<=n; i++)
+		{
+			adj[i] = new ill[n+1];
+		}
+
+		for(int i=0; i<=n; i++)
+		{
+			for(int j=0; j<=n; j++)
+			{
+				adj[i][j] = inf;
+			}
+		}
+
 		int x, y,p;
 		while(cin>> x >> y >> p)
 		{
-			adj[x].push_back({y,p});
-			adj[y].push_back({x,p});
+			adj[x][y] = p;
+			adj[y][x] = p;
 		}
 	}
 	
@@ -40,24 +53,11 @@ class tcp{
 					y = rand()%n+1;
 				//	cout << a->st.count(y) << " " << y<<endl;
 				}while(a->st.count(y));
-				for(auto e : adj[x])
-				{
-					if(e.first == y)
-					{
-						a->add(y, e.second);
-						break;
-					}
-				}
+				a->add(y, adj[x][y]);
 				x = y;
 			}
 			
-			for(auto e : adj[x])
-			{
-				if(e.first == ini)
-				{
-					a->add(ini, e.second, 1);
-				}
-			}
+			a->add(y, adj[x][ini],1);
 			calc_happy(a, max, states.size(), n);
 			if(a->happy != inf){
 				max = min(max, a->cust);
@@ -96,7 +96,7 @@ class tcp{
 
 	void simulation()
 	{//Simula as mutaçoes
-		int rep = 20000;
+		int rep = anos;
 		while(rep--)
 		{
 			int m = states.size();
@@ -142,7 +142,15 @@ class tcp{
 
 	~tcp()
 	{
+		
+		for(int i=0; i<=n; i++)
+		{
+			
+			delete[] adj[i];
+		}
+		
 		delete[] adj;
+
 		for(auto e: states)
 			delete e;
 	}

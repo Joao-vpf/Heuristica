@@ -3,20 +3,10 @@
 #include "gene.h"
 
 
-ill peso(vector<pair<int, ill>>* adj,ill x, ill y)
-{//acha o peso
-    for(auto e : adj[x])
-    {
-        if(e.first == y)
-        {
-            return e.second;
-        }
-    }
-    return inf;
-}
 
 
-gene* cross(gene* a, gene* b,vector<pair<int, ill>>* adj, int m)
+
+gene* cross(gene* a, gene* b,ill** adj, int m)
 {//Faz a mutação
     int n =  a->path.size();
     gene* nv = new gene;
@@ -44,9 +34,9 @@ gene* cross(gene* a, gene* b,vector<pair<int, ill>>* adj, int m)
         if(rand()%2 == 0)
         {
             if(rand()%2==0)
-                nv->add_mut(a->path[i], peso(adj,nv->path.back(), a->path[i]));
+                nv->add_mut(a->path[i], adj[nv->path.back()][a->path[i]]);
             else
-                nv->add_mut(b->path[i], peso(adj,nv->path.back(), b->path[i]));
+                nv->add_mut(b->path[i], adj[nv->path.back()][b->path[i]]);
         }
         else
         {
@@ -55,10 +45,10 @@ gene* cross(gene* a, gene* b,vector<pair<int, ill>>* adj, int m)
             {
                 r = rand()%m+1;
             }
-            nv->add_mut(r, peso(adj,nv->path.back(), r));
+            nv->add_mut(r,adj[nv->path.back()][r]);
         }
     }
-    nv->add_mut(ini, peso(adj,nv->path.back(), ini));
+    nv->add_mut(ini, adj[nv->path.back()][ini]);
     
     return nv;
 }
