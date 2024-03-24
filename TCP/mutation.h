@@ -85,7 +85,7 @@ bool ordena(gene* a, gene* b)
 
 void dead(vector<gene*>& states)
 {//mata alguns casos
-    if(states.size()<3000)return;  // População maxima
+    if(states.size()<max_genes)return;  // População maxima
     
     sort(states.begin(), states.end(), ordenareverso);
     int sz = states.size();
