@@ -16,7 +16,7 @@ int main()
 
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
-			mat[i][j] =0;
+			mat[i][j] = INF;
 
 	int x, y;
 	x = y = 0;
