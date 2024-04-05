@@ -1,0 +1,8 @@
+verbose 1
+simple 0
+max_population 100
+max_generations 100000
+tx_parents 90
+fix -1
+elite 30
+balance 3
