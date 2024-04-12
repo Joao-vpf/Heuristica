@@ -78,7 +78,7 @@ struct params
 		tx_parents = 90;
 		balance = 2;
 		alpha = 2;
-		cross_activate_vector = {"BCR", "AHCAVG"};
+		cross_activate_vector = {"BCR", "AHCAVG","CX"};
 		
 	}
 	

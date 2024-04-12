@@ -23,6 +23,7 @@ class genetic_main
 		{
 			generation[i].init(nodes);
 			generation[i].random_gene((params_active_ga.fix==-1 ? i : params_active_ga.fix), matrix_adj);
+			
 		}
 
 		for (int i = nodes; i < params_active_ga.max_population; i++)
@@ -67,16 +68,22 @@ class genetic_main
 				int father = random_range(0, params_active_ga.max_population/params_active_ga.balance);
 				int mother = random_range(0, params_active_ga.max_population/params_active_ga.balance);
 				new_generation[i].children(generation[father], generation[mother], matrix_adj, params_active_ga);
-				return;
 			}
-			
-			generation = new_generation;
 
+			generation = new_generation;
 			if (params_active_ga.verbose and gen%1000==0)
 			{
 				print_verbose(gen/1000);
 			}
 		}
+	}
+
+	void cross_active_delete(string code)
+	{
+		auto idx = find(params_active_ga.cross_activate_vector.begin(),
+			params_active_ga.cross_activate_vector.end(), code);
+		if (idx != params_active_ga.cross_activate_vector.end())
+			params_active_ga.cross_activate_vector.erase(idx);
 	}
 
 	void config_param(ifstream& input_param)
@@ -121,19 +128,38 @@ class genetic_main
 			{
 				params_active_ga.alpha = value;
 			}
-			else if (param == "BCR" and value == 0)
+			else if (param == "BCR")
 			{
-				auto idx = find(params_active_ga.cross_activate_vector.begin(), 
-				params_active_ga.cross_activate_vector.end(), "BCR");
-				if (idx != params_active_ga.cross_activate_vector.end())
-					params_active_ga.cross_activate_vector.erase(idx);
+				if (value == 0)
+				{
+					this->cross_active_delete(param);
+				}
+				else if (value > 0)
+				{
+
+				}
 			}
-			else if (param == "AHCAVG" and value == 0)
+			else if (param == "AHCAVG")
 			{
-				auto idx = find(params_active_ga.cross_activate_vector.begin(), 
-				params_active_ga.cross_activate_vector.end(), "AHCAVG");
-				if (idx != params_active_ga.cross_activate_vector.end())
-					params_active_ga.cross_activate_vector.erase(idx);
+				if (value == 0)
+				{
+					this->cross_active_delete(param);
+				}
+				else if (value > 0)
+				{
+
+				}
+			}
+			else if (param == "CX")
+			{
+				if (value == 0)
+				{
+					this->cross_active_delete(param);
+				}
+				else if(value > 0)
+				{
+
+				}
 			}
 		}
 	}

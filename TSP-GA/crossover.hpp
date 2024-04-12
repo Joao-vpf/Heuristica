@@ -1,68 +1,44 @@
 #pragma once
-#include "library.hpp"
 #include "gene.hpp"
+#include "library.hpp"
 
 template<typename T> 
 class crossover
 {
 	public:
-	static void bcr(T& children, T& father,T& mother, ull** matrix_adj,const params& params_active_ga)
+	static void bcr(T& children, T& father, T& mother, ull** matrix_adj,const params& params_active_ga)
 	{//Best Cost Route crossover
-		int father_gene= params_active_ga.tx_parents/params_active_ga.alpha, nodes = mother.get_nodes();;
+		int nodes = mother.get_nodes();;
 		children.init(nodes);
-		vector<vector<int>> adj_map(nodes);
-		vector<int> dic_father(nodes);
-		vector<int> dic_mother(nodes);
-		father.get_path();
-		cout << endl;
-		mother.get_path();
-		cout << endl;
-		
-		for(int i=0; i<nodes; i++)
+
+		int cut = random_range(1, nodes-1);
+		for (int i = 0; i < cut; i++)
 		{
-			dic_father[father.get_microgene(i)] = i;
-			dic_mother[mother.get_microgene(i)] = i;
-			adj_map[father.get_microgene(i)].push_back(father.get_microgene((i+1)%nodes));
-			adj_map[mother.get_microgene(i)].push_back(father.get_microgene((i-1+nodes)%nodes));
-			adj_map[mother.get_microgene(i)].push_back(mother.get_microgene((i+1)%nodes));
-			adj_map[mother.get_microgene(i)].push_back(mother.get_microgene((i-1+nodes)%nodes));
-			//adj_map[(nodes-i-1)].push_back(mother.get_microgene(i-1));
-//adj_map[i-1].push_back(mother.get_microgene(i));
+			children.insert_gene(i,father.get_microgene(i));
 		}
-		
-		children.insert_gene(0, father.get_microgene(0));
-		int current_microgene = 0;
-		
-		for (int i = 1; i < nodes; i++)
+
+		for(int i=0; i<nodes and cut <nodes-1; i++)
 		{
-			int min_microgene = -1;
-			ll min_cust = INF;
-			for (auto adj_microgene : adj_map[current_microgene])
+			if (!children.has_microgene(mother.get_microgene(i)))
 			{
-				if(!children.has_microgene(adj_microgene))
-				{
-					ll cust = matrix_adj[current_microgene][adj_microgene];
-					cout << current_microgene <<" -> "<< adj_microgene <<" : " << cust<<endl;
-					if(cust < min_cust)
-					{
-						min_cust = cust;
-						min_microgene = adj_microgene;
-					}
-				}
+				children.insert_gene(cut++, mother.get_microgene(i));
 			}
-			if (min_microgene == -1)
-			{
-				continue;
-			}
-			children.insert_gene(i, min_microgene);
-			current_microgene = min_microgene;
 		}
-		children.get_path();
-		cout << endl;
-		return;
+
+		while (cut < nodes - 1)
+		{
+			int microgene_mutant = random_range(0, nodes);
+			if (!children.has_microgene(microgene_mutant))
+			{
+				children.insert_gene(cut++, microgene_mutant);
+			}
+		}
+
+		children.insert_gene(nodes, children.get_microgene(0));
+		children.fx_cust(matrix_adj);
 	}
 	
-	static void arithmetic_average(T& children, T& father,T& mother, ull** matrix_adj, const params& params_active_ga)
+	static void arithmetic_average(T& children, T& father, T& mother, ull** matrix_adj, const params& params_active_ga)
 	{//arithmetic_average
 		
 		int father_gene= params_active_ga.tx_parents/params_active_ga.alpha, mom_gene = params_active_ga.tx_parents, nodes = mother.get_nodes();;
@@ -111,5 +87,76 @@ class crossover
 			}
 		}
 
+		children.insert_gene(nodes, children.get_microgene(0));
+		children.fx_cust(matrix_adj);
 	}
+
+	static void cx(T& children, T& father, T& mother, ull** matrix_adj, const params& params_active_ga)
+	{ //Cycle Crossover
+		size_t nodes = mother.get_nodes();
+		T bastard;
+		bastard.init(nodes);
+		bastard.random_gene(mother.get_microgene(0), matrix_adj);
+		children.init(nodes);
+		children.random_gene(father.get_microgene(0), matrix_adj);
+		vector<vector<int>> cycles;
+		vector<bool> visited(nodes + 1, false);
+
+		for (size_t i = 0; i < nodes; ++i)
+		{
+			if (!visited[father.get_microgene(i)])
+			{
+				vector<int> cycle = { static_cast<int>(i) };
+				visited[father.get_microgene(i)] = true;
+
+				int j = mother.idx_microgene(father.get_microgene(i));
+				if (j == -1)
+				{
+					continue;
+				}
+				while (j != cycle[0] and !visited[j])
+				{
+					cycle.push_back(j);
+					visited[j] = true;
+					j = mother.idx_microgene(father.get_microgene(j));
+					if (j == -1)
+					{
+						break;
+					}
+				}
+				cycles.push_back(cycle);
+			}
+		}
+
+		size_t cycle_index = 0;
+		for (auto& cycle : cycles)
+		{
+			for (auto u : cycle)
+			{
+				if (cycle_index % 2 == 0)
+				{
+					children.insert_gene(u, father.get_microgene(u));
+					bastard.insert_gene(u, mother.get_microgene(u));
+				}
+				else
+				{
+					children.insert_gene(u, mother.get_microgene(u));
+					bastard.insert_gene(u, father.get_microgene(u));
+				}
+			}
+			cycle_index++;
+		}
+
+		bastard.insert_gene(nodes, bastard.get_microgene(0));
+		children.insert_gene(nodes, children.get_microgene(0));
+
+		bastard.fx_cust(matrix_adj);
+		children.fx_cust(matrix_adj);
+
+		if (children.get_cust() > bastard.get_cust())
+		{
+			children = bastard;
+		}
+	}
+
 };
