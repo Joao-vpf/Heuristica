@@ -17,7 +17,7 @@ class crossover
 			children.insert_gene(i,father.get_microgene(i));
 		}
 
-		for(int i=0; i<nodes and cut <nodes-1; i++)
+		for(int i=0; i<nodes and cut <nodes; i++)
 		{
 			if (!children.has_microgene(mother.get_microgene(i)))
 			{
@@ -25,7 +25,7 @@ class crossover
 			}
 		}
 
-		while (cut < nodes - 1)
+		while (cut < nodes)
 		{
 			int microgene_mutant = random_range(0, nodes);
 			if (!children.has_microgene(microgene_mutant))
@@ -36,6 +36,7 @@ class crossover
 
 		children.insert_gene(nodes, children.get_microgene(0));
 		children.fx_cust(matrix_adj);
+
 	}
 	
 	static void arithmetic_average(T& children, T& father, T& mother, ull** matrix_adj, const params& params_active_ga)

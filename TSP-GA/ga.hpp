@@ -19,14 +19,7 @@ class genetic_main
 	void init_parents()
 	{
 		generation = vector<gene>(params_active_ga.max_population);
-		for (int i = 0; i < nodes; i++)
-		{
-			generation[i].init(nodes);
-			generation[i].random_gene((params_active_ga.fix==-1 ? i : params_active_ga.fix), matrix_adj);
-			
-		}
-
-		for (int i = nodes; i < params_active_ga.max_population; i++)
+		for (int i = 0; i < params_active_ga.max_population; i++)
 		{
 			generation[i].init(nodes);
 			generation[i].random_gene((params_active_ga.fix == -1 ? random_range(0, nodes) : params_active_ga.fix), matrix_adj);
@@ -48,6 +41,63 @@ class genetic_main
 		}
 	}
 
+	vector <ll> calculate_relative_cust(vector<gene>& generation)
+	{
+		ll max_fitness = INF;
+
+		vector<ll> relative_fitness;
+		for (int i = 0; i < params_active_ga.max_population; i++) 
+		{
+			relative_fitness.push_back(max_fitness - generation[i].get_cust());
+		}
+
+		return relative_fitness;
+	}
+
+
+	void roulette_wheel_selection(int& father, int& mother, vector<gene>& generation)
+	{
+		ll random_value = rand();
+		ll cumulative_probability = 0;
+		vector<ll> relative_fitness = calculate_relative_cust(generation);
+		
+		for (int i = 0; i < params_active_ga.max_population; i++)
+		{
+			cumulative_probability += relative_fitness[i];
+			if (random_value <= cumulative_probability) 
+			{
+				father = i;
+				break;
+			}
+		}
+
+		if (father == -1)
+		{
+			father =  random_range(0, params_active_ga.max_population);
+		}
+
+		random_value = rand();
+
+		for (int i = 0; i < params_active_ga.max_population; i++)
+		{
+			cumulative_probability += relative_fitness[i];
+			if (random_value <= cumulative_probability) 
+			{
+				mother = i;
+				break;
+			}
+		}
+
+		if (mother == -1)
+		{
+			mother =  random_range(0, params_active_ga.max_population);
+		}
+		
+		while(mother == father)
+			mother = random_range(0, params_active_ga.max_population);
+
+	}
+
 	void simulation()
 	{
 		for (int gen = 1; gen <= params_active_ga.max_generations; gen++)
@@ -65,12 +115,33 @@ class genetic_main
 
 			for (int i = tx_insert_elite; i < params_active_ga.max_population; i++)
 			{
-				int father = random_range(0, params_active_ga.max_population/params_active_ga.balance);
-				int mother = random_range(0, params_active_ga.max_population/params_active_ga.balance);
+				int father = -1;
+				int mother = -1;
+				if (params_active_ga.balance > 0)
+				{
+
+					father = random_range(0, params_active_ga.max_population / params_active_ga.balance);
+					mother = random_range(0, params_active_ga.max_population / params_active_ga.balance);
+				}
+				else
+				{
+					roulette_wheel_selection(father, mother, generation);
+				}
+
 				new_generation[i].children(generation[father], generation[mother], matrix_adj, params_active_ga);
 			}
 
+			for (int i = tx_insert_elite; i < params_active_ga.max_population; i++)
+			{
+				int rate = random_range(0, 100);
+				if (rate <= params_active_ga.swap_rate and new_generation[i].get_cust() > generation[tx_insert_elite-1].get_cust())
+				{
+					new_generation[i].mutation_swap(matrix_adj, params_active_ga);
+				}
+			}
+
 			generation = new_generation;
+
 			if (params_active_ga.verbose and gen%1000==0)
 			{
 				print_verbose(gen/1000);
@@ -123,10 +194,24 @@ class genetic_main
 			else if (param == "balance" and value >= 1 and value<=params_active_ga.max_population)
 			{
 				params_active_ga.balance = value;
+				params_active_ga.roulette = 0;
+			}
+			else if (param == "roulette" and value >= 1)
+			{
+				params_active_ga.roulette = 1;
+				params_active_ga.balance = 0;
 			}
 			else if (param == "alpha" and value >= 2 and value<=100)
 			{
 				params_active_ga.alpha = value;
+			}
+			else if (param == "swap_rate" and value >= 2 and value <= 100)
+			{
+				params_active_ga.swap_rate = value;
+			}
+			else if (param == "opt_path_swap_it" and value >= 0 and value <= 1000)
+			{
+				params_active_ga.opt_path_swap_it = value;
 			}
 			else if (param == "BCR")
 			{

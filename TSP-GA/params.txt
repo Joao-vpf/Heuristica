@@ -2,9 +2,13 @@ verbose 1
 simple 0
 max_population 100
 max_generations 100000
-tx_parents 90
+tx_parents 80
 fix -1
-elite 30
-balance 1
+elite 7
+roulette 1
+swap_rate 40
+opt_path_swap_it 50
 alpha 2
 CX 1
+BCR 1
+AHCAVG 1

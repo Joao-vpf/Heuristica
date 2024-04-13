@@ -65,18 +65,24 @@ struct params
 	int balance;
 	int fix;
 	int alpha;
+	int swap_rate;
+	bool roulette;
+	int opt_path_swap_it;
 	vector<string> cross_activate_vector;
 	
 	params() 
 	{
-		max_generations = 100;
+		max_generations = 10000;
 		max_population = 100;
 		verbose = false;
 		simple = true;
-		elite = 10;
+		elite = 7;
 		fix = -1;
-		tx_parents = 90;
-		balance = 2;
+		tx_parents = 80;
+		balance = 0;
+		roulette = true;
+		swap_rate = 40;
+		opt_path_swap_it = 50;
 		alpha = 2;
 		cross_activate_vector = {"BCR", "AHCAVG","CX"};
 		

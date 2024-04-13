@@ -10,6 +10,83 @@ class gene
 	vector<int> vis;
 	ll cust;
 
+	ll fx_cust(ull** matrix_adj, vector<int> path_copy)
+	{
+		ll cust_copy = 0;
+		ll cust_inf = INF;
+		bool mutant = false;
+		for (int i = 1; i < nodes - 1; i++)
+		{
+			if (vis[path_copy[i]] == 1)
+			{
+				cust_copy += matrix_adj[path_copy[i - 1]][path_copy[i]];
+				if (matrix_adj[path_copy[i - 1]][path_copy[i]] != INF)
+					cust_inf -= matrix_adj[path_copy[i - 1]][path_copy[i]];
+			}
+			else
+			{
+				if (matrix_adj[path_copy[i - 1]][path_copy[i]] != INF)
+					cust_inf -= matrix_adj[path_copy[i - 1]][path_copy[i]];
+				mutant = true;
+			}
+		}
+
+		if (vis[path_copy[0]] == 2)
+		{
+			cust_copy += matrix_adj[path_copy[0]][path_copy[1]];
+			cust_copy += matrix_adj[path_copy[nodes - 2]][path_copy[0]];
+		}
+		else
+		{
+			if (matrix_adj[path_copy[0]][path_copy[1]] != INF)
+			{
+				cust_inf -= matrix_adj[path_copy[0]][path_copy[1]];
+			}
+			if (matrix_adj[path_copy[nodes - 2]][path_copy[0]] != INF)
+			{
+				cust_inf -= matrix_adj[path_copy[nodes - 2]][path_copy[0]];
+			}
+
+			mutant = true;
+		}
+
+		if (mutant)
+		{
+			cust_copy = cust_inf;
+		}
+
+		return cust_copy;
+	}
+
+	void opt_path(ull** matrix_adj,params& params_active_ga)
+	{
+		for (int i = 0; i < params_active_ga.opt_path_swap_it; i++)
+		{
+			vector<int> path_copy = path;
+			int idxA = random_range(1, nodes - 2);
+			int idxB = random_range(1, nodes - 2);
+
+			while (idxB == idxA)
+				idxB = random_range(1, nodes - 2);
+
+			if (idxA > idxB)
+				swap(idxA, idxB);
+
+			while (idxA < idxB)
+			{
+				swap(path_copy[idxA], path_copy[idxB]);
+				idxA++;
+				idxB--;
+			}
+			ll cust_copy = fx_cust(matrix_adj, path_copy);
+			if (cust_copy < cust)
+			{
+				path = path_copy;
+				this->fx_cust(matrix_adj);
+			}
+		}
+	}
+
 	public:
 		gene()
 		{
@@ -26,9 +103,9 @@ class gene
 			cust = 0;
 			ll cust_inf = INF;
 			bool mutant = false;
-			for (int i = 1; i < nodes; i++)
+			for (int i = 1; i < nodes-1; i++)
 			{
-				if ((path[i] == path[0] and vis[i] == 2) or (vis[i] == 1))
+				if (vis[path[i]] == 1)
 				{
 					cust += matrix_adj[path[i - 1]][path[i]];
 					if (matrix_adj[path[i - 1]][path[i]] != INF)
@@ -36,9 +113,31 @@ class gene
 				}
 				else
 				{
+					if (matrix_adj[path[i - 1]][path[i]] != INF)
+						cust_inf -= matrix_adj[path[i - 1]][path[i]];
 					mutant = true;
 				}
 			}
+
+			if (vis[path[0]] == 2)
+			{
+				cust += matrix_adj[path[0]][path[1]];
+				cust += matrix_adj[path[nodes-2]][path[0]];
+			}
+			else
+			{
+				if (matrix_adj[path[0]][path[1]] != INF)
+				{
+					cust_inf -= matrix_adj[path[0]][path[1]];
+				}
+				if (matrix_adj[path[nodes - 2]][path[0]] != INF)
+				{
+					cust_inf -= matrix_adj[path[nodes - 2]][path[0]];
+				}
+
+				mutant = true;
+			}
+
 			if (mutant)
 			{
 				cust = cust_inf;
@@ -71,8 +170,8 @@ class gene
 				vis[idx]++;
 			}
 			path[nodes-1] = initial;
-			vis[nodes - 1]++;
-			repath[initial] = nodes-1;
+			repath[initial] = nodes - 1;
+			vis[initial]++;
 			fx_cust(matrix_adj);
 		}
 
@@ -82,6 +181,15 @@ class gene
 			{
 				cout << path[i] << (i + 1 < nodes ? " " : ".");
 			}
+		}
+
+		void mutation_swap(ull** matrix_adj, params& params_active_ga)
+		{
+			int idxA = random_range(1, nodes - 2);
+			int idxB = random_range(1, nodes - 2);
+			swap(this->path[idxA], this->path[idxB]);
+			this->fx_cust(matrix_adj);
+			opt_path(matrix_adj, params_active_ga);
 		}
 
 		int get_nodes()
