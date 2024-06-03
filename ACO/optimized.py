@@ -1,9 +1,11 @@
 from library import euclidean_distance, dic, cid, fitness
+from optimizers import opt2_s, opt3_s
 import random
 import time
 import math
+import copy
 
-class Basic:
+class Optimized:
     """
         phero = pheromone matrix
     """
@@ -19,6 +21,8 @@ class Basic:
     Q = 31
     verbose = False
     complex_verbose = False
+    it_opt = 200
+    optimizers = [opt2_s, opt3_s]
     
     def init_matrix(self):
         """
@@ -37,7 +41,7 @@ class Basic:
                 
                 self.phero[keys][keys2] = 10.0
     
-    def __init__(self, ants: int = 5, it_max: int = None, time_max: float  = 180, phi: float = 0.01, alpha: float = 2, beta: float = 5, Q: int = 31, verbose: bool = False, complex_verbose: bool = False) -> None:
+    def __init__(self, ants: int = 5, it_max: int = None, it_opt: int = 200, time_max: float  = 180, phi: float = 0.01, alpha: float = 2, beta: float = 5, Q: int = 31, verbose: bool = False, complex_verbose: bool = False, optimizers: list = [opt2_s, opt3_s]) -> None:
         """
             objective:
                 initialize parameters
@@ -58,6 +62,7 @@ class Basic:
         self.n = len(dic)
         self.anst = ants
         self.it_max = it_max
+        self.it_opt = it_opt
         self.time_max = time_max
         self.phi = phi
         self.alpha = alpha
@@ -65,6 +70,7 @@ class Basic:
         self.Q = Q
         self.verbose = verbose
         self.complex_verbose = complex_verbose
+        self.optimizers = optimizers
         self.init_matrix()
     
     def fxy(self, _from , _to , k):
@@ -96,9 +102,8 @@ class Basic:
         probabilities_norm = {}
         
         for idx, prob in self.probabilities.items():
-            probabilities_norm[idx] = round(prob / sum_t, 10)
+            probabilities_norm[idx] = prob / sum_t
         
-        probabilities_norm = dict(sorted(probabilities_norm.items(), key=lambda item: item[1]))
         roll = random.uniform(0.0, 1.0)
         sum_t = 0
         
@@ -108,6 +113,24 @@ class Basic:
                 return idx
             
         return list(probabilities_norm.keys())[-1]
+    
+    def optimizations(self, new_path, fit):
+        
+        aux = copy.deepcopy(new_path)
+        aux_fit = fit
+        
+        for opt in self.optimizers:
+            for _ in range(self.it_opt):
+                aux = opt(new_path, self.n)
+                aux_fit = fitness(aux, self.n)
+                
+                if aux_fit < fit:
+                    new_path = copy.deepcopy(aux)
+                    fit = aux_fit
+
+        return new_path, fit
+    
+                    
     
     def new_path(self, idx: int, list_ants_path: list):
         """
@@ -135,6 +158,7 @@ class Basic:
             list_not_visited.remove(point)
         
         fit = fitness(new_path, self.n)
+        new_path, fit = self.optimizations(new_path, fit)
         list_ants_path[idx] = (fit, new_path)
 
     def evapore(self):
@@ -179,11 +203,15 @@ class Basic:
             
             for idx in range(self.ants):
                 self.new_path(idx, list_ants_path)
-             
+            
+            if result[0] != math.inf:
+                list_ants_path.append(result) 
+                self.att_phero(self.ants, list_ants_path)
+                
             self.evapore()
             
             for idx in range(self.ants):
-               self.att_phero(idx, list_ants_path)
+                self.att_phero(idx, list_ants_path)
             
             it  = it + 1 
               
@@ -198,10 +226,10 @@ class Basic:
                 
             if self.verbose:
                 if self.complex_verbose:
-                   print(result)
+                    print(result)
                 
                 else:
-                    print(result[0])
+                    print(result[0])   
                 
         return result
     

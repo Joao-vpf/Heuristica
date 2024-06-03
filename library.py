@@ -27,7 +27,7 @@ def read(filename):
 
     return dic, cid
 
-async def fitness(p, n):
+def fitness(p, n):
     """
     """
     fit = 0

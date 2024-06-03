@@ -1,7 +1,7 @@
 import random
 import copy
 
-async def opt2_s(p, n):
+def opt2_s(p, n):
     """
     """
     
@@ -22,7 +22,7 @@ async def opt2_s(p, n):
         
     return aux
 
-async def opt3_s(p, n):
+def opt3_s(p, n):
     """
     """
     
