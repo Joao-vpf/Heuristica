@@ -1,16 +1,18 @@
 from library import euclidean_distance, dic, cid, fitness
+from optimizers import opt2_s, opt3_s
 import concurrent.futures
 import asyncio
 import random
 import time
 import json
 import math
-
+import copy
 
 class ACO:
     """
         phero = pheromone matrix
     """
+    n = 0
     phero = {}
     probabilities = {}
     ants  = 5
@@ -22,6 +24,7 @@ class ACO:
     Q = 5
     verbose = False
     complex_verbose = False
+    it_opt = 200
     
     def init_matrix(self):
         """
@@ -38,9 +41,9 @@ class ACO:
                 if keys == keys2: 
                     continue
                 
-                self.phero[keys][keys2] = random.uniform(1.0, min(self.Q, 2))
+                self.phero[keys][keys2] = 10.0
     
-    def __init__(self, ants: int = 5, it_max: int = None, time_max: float  = 60, phi: float = 0.3, alpha: float = 0.5, beta: float = 0.5, Q: int = 5, verbose: bool = False, complex_verbose: bool = False) -> None:
+    def __init__(self, ants: int = 5, it_max: int = None,it_opt: int = 200, time_max: float  = 60, phi: float = 0.3, alpha: float = 0.5, beta: float = 0.5, Q: int = 5, verbose: bool = False, complex_verbose: bool = False) -> None:
         """
             objective:
                 initialize parameters
@@ -58,6 +61,8 @@ class ACO:
         if(len(dic) == 0 or len(cid) == 0):
             return None
         
+        self.it_opt = it_opt
+        self.n = len(dic)
         self.anst = ants
         self.it_max = it_max
         self.time_max = time_max
@@ -74,10 +79,9 @@ class ACO:
         """
         global dic
         
-        visibility = math.pow(1/euclidean_distance(dic[_from], dic[_to]), self.beta)
-        self.probabilities[_to] = math.pow(self.phero[_from][_to], self.alpha) * visibility
-        self.probabilities[_to] = self.probabilities[_to]/ (math.pow(k, self.alpha) * visibility)
-        self.probabilities[_to] = self.probabilities[_to]
+        visibility = (1/euclidean_distance(dic[_from], dic[_to])) ** self.beta
+        self.probabilities[_to] = (self.phero[_from][_to] ** self.alpha) * visibility
+        self.probabilities[_to] /= (k ** self.alpha) * visibility
     
     async def fk(self, _from, k):
         """
@@ -85,8 +89,9 @@ class ACO:
         global dic
         
         sum_t = 0
+        
         for not_vis in k:
-            sum_t = sum_t + euclidean_distance(dic[_from], dic[not_vis])
+            sum_t += self.phero[_from][not_vis] ** self.alpha
         
         return sum_t
     
@@ -115,18 +120,18 @@ class ACO:
         """
         global dic
         
-        n = len(dic) 
         new_path = []
-        list_not_visited = [i for i in range(n)] 
-        point = random.randrange(0, n)
+        list_not_visited = [i for i in range(self.n)] 
+        point = random.randrange(0, self.n)
         new_path.append(point)
         list_not_visited.remove(point)
         
         while len(list_not_visited):
             self.probabilities = {}
+            tasks = []
             k = await self.fk(point, list_not_visited)
             
-            for i in range(n):
+            for i in range(self.n):
                 if not i in list_not_visited:
                     continue
                 
@@ -136,17 +141,32 @@ class ACO:
             new_path.append(point)
             list_not_visited.remove(point)
         
-        fit = await fitness(new_path)
+        fit = await fitness(new_path, self.n)
+        
+        for _ in range(self.it_opt):
+            aux = await opt2_s(new_path, self.n)
+            aux_fit = await fitness(aux, self.n)
+            
+            if aux_fit < fit:
+                new_path = copy.deepcopy(aux)
+                fit = aux_fit
+        
+        for _ in range(self.it_opt):
+            aux = await opt3_s(new_path, self.n)
+            aux_fit = await fitness(aux, self.n)
+            
+            if aux_fit < fit:
+                new_path = copy.deepcopy(aux)
+                fit = aux_fit
+                
         list_ants_path[idx] = (fit, new_path)
 
     async def evapore(self):
         """
         """
         
-        n = len(self.phero)
-        
         for keys in self.phero.keys():
-            for keys2 in range(n):
+            for keys2 in range(self.n):
                 if keys == keys2: 
                     continue 
     
@@ -156,9 +176,7 @@ class ACO:
         """
         """
         
-        n = len(list_ants_path[idx])
-        
-        for i in range(n):
+        for i in range(self.n):
             self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] = self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] + self.Q / list_ants_path[idx][0]
 
     async def run(self):
@@ -213,11 +231,11 @@ class ACO:
                     print(item)
                 
             if self.verbose and it%100 == 0:
-                print(result)
+                print(json.dumps(self.phero, indent=4))
+                print(result)    
                 
         return result
-            
-        
+                
     async def multiprocess(self, tasks):
         """
         """

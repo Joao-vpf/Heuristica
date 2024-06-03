@@ -27,11 +27,10 @@ def read(filename):
 
     return dic, cid
 
-async def fitness(p):
+async def fitness(p, n):
     """
     """
     fit = 0
-    n = len(p)
     
     for i in range(n):
         fit = fit + euclidean_distance(dic[p[i-1]], dic[p[i]])
