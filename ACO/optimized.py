@@ -39,7 +39,7 @@ class Optimized:
                 if keys == keys2: 
                     continue
                 
-                self.phero[keys][keys2] = 10.0
+                self.phero[keys][keys2] = 1.0
     
     def __init__(self, ants: int = 5, it_max: int = None, it_opt: int = 200, time_max: float  = 180, phi: float = 0.01, alpha: float = 2, beta: float = 5, Q: int = 31, verbose: bool = False, complex_verbose: bool = False, optimizers: list = [opt2_s, opt3_s]) -> None:
         """
@@ -170,15 +170,16 @@ class Optimized:
                 if keys == keys2: 
                     continue 
     
-                self.phero[keys][keys2] = max((1 - self.phi) * self.phero[keys][keys2], 1e-10)
+                self.phero[keys][keys2] = max((1 - self.phi) * self.phero[keys][keys2], 1e-5)
     
     def att_phero(self, idx: int, list_ants_path: list):
         """
         """
         
         for i in range(self.n):
-            self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] = self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] + self.Q / list_ants_path[idx][0]
-
+            self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] = min(self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] + self.Q / list_ants_path[idx][0], \
+                1.0)
+            
     def run(self):
         """
             objective:
@@ -204,12 +205,12 @@ class Optimized:
             for idx in range(self.ants):
                 self.new_path(idx, list_ants_path)
             
-            if result[0] != math.inf:
-                list_ants_path.append(result) 
-                self.att_phero(self.ants, list_ants_path)
-                
             self.evapore()
             
+            #if result[0] != math.inf:
+               # list_ants_path.append(result) 
+                #self.att_phero(self.ants, list_ants_path)
+                
             for idx in range(self.ants):
                 self.att_phero(idx, list_ants_path)
             
