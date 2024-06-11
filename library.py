@@ -1,5 +1,6 @@
 import re
 import math
+import random
 
 dic = {}
 cid = {}
@@ -29,6 +30,10 @@ def read(filename):
 
 def fitness(p, n):
     """
+
+        Parameters:
+            p: Path
+            n: Size path
     """
     fit = 0
     
@@ -36,3 +41,9 @@ def fitness(p, n):
         fit = fit + euclidean_distance(dic[p[i-1]], dic[p[i]])
         
     return fit
+
+def create_path():
+    new_path = list(dic.keys())
+    random.shuffle(new_path)
+    
+    return new_path

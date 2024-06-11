@@ -1,6 +1,21 @@
 import random
 import copy
 
+def opt1_s(p, n):
+    """
+    """
+    
+    aux = copy.deepcopy(p)
+    l = random.randint(0, n-1)
+    r = random.randint(0, n-1)
+    
+    while l == r:
+        l = random.randint(0, n-1)
+        
+    aux[l], aux[r] = aux[r], aux[l]
+        
+    return aux
+
 def opt2_s(p, n):
     """
     """
