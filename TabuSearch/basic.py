@@ -59,7 +59,6 @@ class Basic:
         """
         """
         new_path = copy.deepcopy(self.best_solution[1])
-        new_fit = self.best_solution[0]
         it = 0
         it_beta = 0
         
@@ -73,13 +72,6 @@ class Basic:
                 
             if  (not new_path[l] in self.tabu_list[new_path[r-1]] or not new_path[r] in self.tabu_list[new_path[l-1]]):
                 new_path[l], new_path[r] = new_path[r], new_path[l]
-                aux_fit = fitness(new_path, self.n)
-                
-                if aux_fit > new_fit:
-                    new_path[r], new_path[l] = new_path[l], new_path[r]
-                
-                else:
-                    new_fit = aux_fit
                 
                 it += 1
         
@@ -91,7 +83,7 @@ class Basic:
         while self.it <= self.it_max or time.time() - start <= self.time_max:
             self.it += 1
             
-            if self.verbose == True and self.it%10000 == 0:
+            if self.verbose == True and self.it%10000 == 1:
                 if self.complex_verbose == True:
                     print(self.best_solution)
                     

@@ -1,6 +1,7 @@
 from library import euclidean_distance, dic, cid, fitness
 import random
 import time
+from multiprocessing import Process, Manager
 import math
 
 class Basic:
@@ -19,6 +20,7 @@ class Basic:
     Q = 31
     verbose = False
     complex_verbose = False
+    multiprocess = True
     
     def init_matrix(self):
         """
@@ -37,7 +39,7 @@ class Basic:
                 
                 self.phero[keys][keys2] = 1.0
     
-    def __init__(self, ants: int = 5, it_max: int = None, time_max: float  = 180, phi: float = 0.01, alpha: float = 2, beta: float = 5, Q: int = 31, verbose: bool = False, complex_verbose: bool = False) -> None:
+    def __init__(self, ants: int = 5, it_max: int = None, time_max: float  = 180, phi: float = 0.01, alpha: float = 2, beta: float = 5, Q: int = 31, verbose: bool = False, complex_verbose: bool = False, multiprocess:bool = True) -> None:
         """
             objective:
                 initialize parameters
@@ -56,7 +58,7 @@ class Basic:
             return None
         
         self.n = len(dic)
-        self.anst = ants
+        self.ants = ants
         self.it_max = it_max
         self.time_max = time_max
         self.phi = phi
@@ -65,16 +67,18 @@ class Basic:
         self.Q = Q
         self.verbose = verbose
         self.complex_verbose = complex_verbose
+        self.multiprocess = multiprocess
         self.init_matrix()
+        
     
-    def fxy(self, _from , _to , k):
+    def fxy(self, _from , _to , k, probabilities):
         """
         """
         global dic
         
         visibility = (1/euclidean_distance(dic[_from], dic[_to])) ** self.beta
-        self.probabilities[_to] = (self.phero[_from][_to] ** self.alpha) * visibility
-        self.probabilities[_to] /= (k ** self.alpha) * visibility
+        probabilities[_to] = (self.phero[_from][_to] ** self.alpha) * visibility
+        probabilities[_to] /= (k ** self.alpha) * visibility
     
     def fk(self, _from, k):
         """
@@ -88,14 +92,14 @@ class Basic:
         
         return sum_t
     
-    def roullete(self):
+    def roullete(self, probabilities):
         """
         """
         
-        sum_t = sum(self.probabilities.values())
+        sum_t = sum(probabilities.values())
         probabilities_norm = {}
         
-        for idx, prob in self.probabilities.items():
+        for idx, prob in probabilities.items():
             probabilities_norm[idx] = round(prob / sum_t, 10)
         
         probabilities_norm = dict(sorted(probabilities_norm.items(), key=lambda item: item[1]))
@@ -107,7 +111,7 @@ class Basic:
             if sum_t >= roll:
                 return idx
             
-        return list(probabilities_norm.keys())[-1]
+        return list(probabilities_norm.keys())[-1],
     
     def new_path(self, idx: int, list_ants_path: list):
         """
@@ -121,21 +125,23 @@ class Basic:
         list_not_visited.remove(point)
         
         while len(list_not_visited):
-            self.probabilities = {}
+            probabilities = {}
             k = self.fk(point, list_not_visited)
             
             for i in range(self.n):
                 if not i in list_not_visited:
                     continue
                 
-                self.fxy(point, i, k)
+                self.fxy(point, i, k, probabilities)
                 
-            point = self.roullete()
+            point = self.roullete(probabilities)
             new_path.append(point)
             list_not_visited.remove(point)
         
         fit = fitness(new_path, self.n)
         list_ants_path[idx] = (fit, new_path)
+
+        return idx, (fit, new_path)
     
     def evapore(self):
         """
@@ -156,6 +162,33 @@ class Basic:
             self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] = min(self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] + self.Q / list_ants_path[idx][0], \
                 1.0)
             
+    def init_all_paths(self):
+        """
+        """
+        
+        list_ants_path = [[] for _ in range(self.ants)]
+        
+        if self.multiprocess:
+            
+            maneger = Manager()
+            list_ants_path = maneger.list(list_ants_path)
+            
+            process = []
+            for idx in range(self.ants):
+                pro = Process(target = self.new_path, args = (idx, list_ants_path)) 
+                process.append(pro)
+                pro.start()
+            
+            for pro in process:
+                pro.join()
+            
+        else:
+            for idx in range(self.ants):
+                self.new_path(idx, list_ants_path)
+            
+        return list(list_ants_path)
+        
+    
     def run(self):
         """
             objective:
@@ -176,10 +209,7 @@ class Basic:
             if not self.it_max is None and self.it_max < it:
                 break
             
-            list_ants_path = [[] for _ in range(self.ants)]
-            
-            for idx in range(self.ants):
-                self.new_path(idx, list_ants_path)
+            list_ants_path = self.init_all_paths()
              
             self.evapore()
             
@@ -207,6 +237,6 @@ class Basic:
                 
                 else:
                     print(result[0])
-                
+        
         return result
     
