@@ -98,5 +98,6 @@ class Basic:
             
             self.att_tabu_list(self.best_solution[1])
             
+        return self.best_solution
 
     

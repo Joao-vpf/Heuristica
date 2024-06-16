@@ -2,12 +2,13 @@ import re
 import math
 import random
 
-dic = {}
-cid = {}
+dic: dict = {}
+cid: dict = {}
 
 def euclidean_distance(coord1, coord2):
     x1, y1 = coord1
     x2, y2 = coord2
+    
     return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
 def read(filename):
@@ -28,7 +29,7 @@ def read(filename):
 
     return dic, cid
 
-def fitness(p, n):
+def fitness(p, n, r: int = None):
     """
 
         Parameters:

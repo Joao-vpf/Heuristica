@@ -3,7 +3,7 @@ from optimizers import opt2_s, opt3_s
 import random
 import time
 from multiprocessing import Process, Manager
-import math
+import json
 import copy
 
 class Optimized:
@@ -24,6 +24,8 @@ class Optimized:
     complex_verbose = False
     it_opt = 200
     optimizers = [opt2_s, opt3_s]
+    path_init = None
+    omega = 1
     multiprocess = 0
     
     def init_matrix(self):
@@ -43,7 +45,7 @@ class Optimized:
                 
                 self.phero[keys][keys2] = 1.0
     
-    def __init__(self, ants: int = 5, it_max: int = None, it_opt: int = 200, time_max: float  = 180, phi: float = 0.01, alpha: float = 2, beta: float = 5, Q: int = 31, verbose: bool = False, complex_verbose: bool = False, optimizers: list = [opt2_s, opt3_s], multiprocess = 0) -> None:
+    def __init__(self, path_init = None, ants: int = 5, it_max: int = None, it_opt: int = 200, time_max: float  = 180, phi: float = 8e-4, alpha: float= 2, beta: float = 5, omega: int = 1, Q: int = 31, verbose: bool = False, complex_verbose: bool = False, optimizers: list = [opt2_s, opt3_s], multiprocess = 0) -> None:
         """
             objective:
                 initialize parameters
@@ -62,6 +64,7 @@ class Optimized:
             return None
         
         self.n = len(dic)
+        self.path_init = path_init
         self.ants = ants
         self.it_max = it_max
         self.it_opt = it_opt
@@ -69,6 +72,7 @@ class Optimized:
         self.phi = phi
         self.alpha = alpha
         self.beta = beta
+        self.omega = min(max(0, omega), 100)
         self.Q = Q
         self.verbose = verbose
         self.complex_verbose = complex_verbose
@@ -171,15 +175,14 @@ class Optimized:
                 if keys == keys2: 
                     continue 
     
-                self.phero[keys][keys2] = max((1 - self.phi) * self.phero[keys][keys2], 1e-5)
+                self.phero[keys][keys2] = max((1 - self.phi) * self.phero[keys][keys2], 1e-2)
     
     def att_phero(self, idx: int, list_ants_path: list):
         """
         """
         
         for i in range(self.n):
-            self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] = min(self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] + self.Q / list_ants_path[idx][0], \
-                1.0)
+            self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] = min(self.phero[list_ants_path[idx][1][i-1]][list_ants_path[idx][1][i]] + self.Q / list_ants_path[idx][0], 1.0)
      
     def init_all_paths(self):
         """
@@ -218,7 +221,12 @@ class Optimized:
         
         start_time = time.time()
         it =  0
-        result = [math.inf, []]
+        
+        if self.path_init is None:
+            result = (float("inf"), [])
+        
+        else:
+            result = self.path_init
         
         while True:
             if not self.time_max is None and self.time_max < time.time() - start_time:
@@ -231,7 +239,7 @@ class Optimized:
             
             self.evapore()
             
-            if result[0] != math.inf:
+            if  self.omega and result[0] != float("inf") and it%self.omega == 0:
                 list_ants_path.append(result) 
                 self.att_phero(self.ants, list_ants_path)
                 
@@ -248,6 +256,9 @@ class Optimized:
                     
                 if self.complex_verbose:
                     print(item)
+                
+            if self.complex_verbose:
+                print(json.dumps(self.phero, indent=4))
                 
             if self.verbose:
                 if self.complex_verbose:
