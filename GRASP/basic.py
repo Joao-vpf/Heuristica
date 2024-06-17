@@ -33,7 +33,7 @@ class Basic:
         g_list = []
         
         for caditade in candidates:
-            g_list.append((euclidean_distance(dic[solution[0]], dic[caditade]), cid[dic[caditade]]))
+            g_list.append((euclidean_distance(dic[solution[-1]], dic[caditade]), cid[dic[caditade]]))
                 
         return sorted(g_list, key=lambda x : x[0])
 
